@@ -3,12 +3,12 @@ plugins {
 }
 
 android {
-    compileSdk 30
+    compileSdk rootProject.ext.compileSdk
 
     defaultConfig {
         applicationId "com.aice.localmaven"
-        minSdk 21
-        targetSdk 30
+        minSdk rootProject.ext.minSdk
+        targetSdk rootProject.ext.compileSdk
         versionCode 1
         versionName "1.0"
 
@@ -35,6 +35,6 @@ dependencies {
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
-    implementation 'com.aice.test:library:2.0.0'
+    implementation 'com.aice.test:library:1.0.0'
 
 }

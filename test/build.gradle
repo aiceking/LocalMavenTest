@@ -1,31 +1,14 @@
 plugins {
     id 'com.android.library'
-    id 'maven'
-}
-
-def group = 'com.aice.test'
-def version = '2.0.0'
-def artifactId = 'library'
-
-//将插件打包上传到本地maven仓库
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            pom.groupId = group
-            pom.artifactId = artifactId
-            pom.version = version
-            //指定本地maven的路径，在项目根目录下
-            repository(url: uri('../repos'))
-        }
-    }
+    id 'maven-publish'
 }
 
 android {
-    compileSdkVersion 30
+    compileSdk rootProject.ext.compileSdk
 
     defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 30
+        minSdk rootProject.ext.minSdk
+        targetSdk rootProject.ext.compileSdk
         versionCode 1
         versionName "1.0"
 
@@ -52,4 +35,51 @@ dependencies {
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+}
+
+
+publishing {
+    repositories {
+        maven {
+            url = uri('../repos')
+            println("Publishing to remote repository: $url")
+        }
+//        maven {
+//            credentials {
+//                username = "meevii-publisher"
+//                password = "meevii-publisher"
+//            }
+//            if (project.version.endsWith("SNAPSHOT")) {
+//                url = "https://internal-sdk.lexinshengwen.com/nexus/repository/maven-snapshots/"
+//            } else {
+//                url = "https://internal-sdk.lexinshengwen.com/nexus/repository/maven-releases"
+//            }
+//            println("Publishing to remote repository: $url")
+//        }
+    }
+
+    publications {
+        maven(MavenPublication) {
+            // 依赖 bundleReleaseAar 任务，并上传其产出的aar
+            afterEvaluate { artifact(tasks.getByName("bundleReleaseAar")) }
+            groupId = "com.aice.test"
+            artifactId = "library"
+            version = '1.0.0'
+            // pom文件中声明依赖，从而传递到使用方
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+                configurations.implementation.allDependencies.each {
+                    // 避免出现空节点或 artifactId=unspecified 的节点
+                    if (it.group != null && (it.name != null && "unspecified" != it.name) && it.version != null) {
+                        println "dependency=${it.toString()}"
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                        dependencyNode.appendNode('scope', 'compile')
+                    }
+                }
+            }
+        }
+    }
 }
